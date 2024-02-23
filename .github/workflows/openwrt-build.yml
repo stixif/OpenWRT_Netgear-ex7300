@@ -52,7 +52,7 @@ jobs:
       id: check_commit_date
       run: |
         #LAST_COMMIT_DATE=$(curl -s https://api.github.com/repos/$REPO/commits/$REPO_BRANCH | jq -r '.[0].commit.author.date')
-        LAST_COMMIT_DATE=$(git ls-remote --heads https://github.com/$REPO/commits/$REPO_BRANCH/$VERZEICHNIS | cut -f 1)
+        LAST_COMMIT_DATE=$(curl -s "https://api.github.com/repos/$REPO/commits?path=$VERZEICHNIS" | jq '.[0].commit.author.date')
         echo "Last commit date: $LAST_COMMIT_DATE"
         #echo "::set-output name=last_commit_date::$LAST_COMMIT_DATE"
 
@@ -61,6 +61,7 @@ jobs:
         # Check if the last commit date is within the last 24 hours
         LAST_COMMIT_TIMESTAMP=$(date -d "${{ steps.check_commit_date.outputs.last_commit_date }}" +"%s")
         CURRENT_TIMESTAMP=$(date +"%s")
+        echo "Current Timestamp: $CURRENT_TIMESTAMP"
         ELAPSED_TIME=$(($CURRENT_TIMESTAMP - $LAST_COMMIT_TIMESTAMP))
         if [ $ELAPSED_TIME -gt 86400 ]; then
           echo "No update in the last 24 hours. Skipping the workflow."
