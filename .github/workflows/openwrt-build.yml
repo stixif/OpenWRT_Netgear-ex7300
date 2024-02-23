@@ -25,7 +25,8 @@ jobs:
     - name: Check last commit date
       id: check_commit_date
       run: |
-        LAST_COMMIT_DATE=$(git ls-remote --heads $REPO_URL $REPO_BRANCH | cut -f 1)
+        #LAST_COMMIT_DATE=$(git ls-remote --heads $REPO_URL $REPO_BRANCH | cut -f 1)
+        LAST_COMMIT_DATE=$(git ls-remote --heads https://github.com/openwrt/openwrt/commits/master/target/linux/ath79 | cut -f 1)
         echo "Last commit date: $LAST_COMMIT_DATE"
         #echo "::set-output name=last_commit_date::$LAST_COMMIT_DATE"
 
