@@ -54,7 +54,8 @@ jobs:
         #LAST_COMMIT_DATE=$(curl -s https://api.github.com/repos/$REPO/commits/$REPO_BRANCH | jq -r '.[0].commit.author.date')
         LAST_COMMIT_DATE=$(curl -s "https://api.github.com/repos/$REPO/commits?path=$VERZEICHNIS" | jq '.[0].commit.author.date')
         echo "Last commit date: $LAST_COMMIT_DATE"
-        LAST_COMMIT_DATE=$(date -d "$LAST_COMMIT_DATE" +"%s")
+        # Konvertiere das GitHub-Datum in Unix-Timestamp mit Python
+        LAST_COMMIT_DATE=$(python3 -c "from datetime import datetime; print(int(datetime.strptime('$LAST_COMMIT_DATE', '%Y-%m-%dT%H:%M:%SZ').timestamp()))")
         echo "Last commit timestamp: $LAST_COMMIT_DATE"
         #echo "::set-output name=last_commit_date::$LAST_COMMIT_DATE"
 
