@@ -51,7 +51,7 @@ jobs:
     - name: Check last commit date
       id: check_commit_date
       run: |
-        LAST_COMMIT_DATE=$(curl -s "https://api.github.com/repos/$REPO/commits?path=$VERZEICHNIS" | jq -r '.sha')
+        LAST_COMMIT_DATE=$(curl -s "https://api.github.com/repos/$REPO/commits?path=$VERZEICHNIS" | jq -r '.commit.author.date')
         echo "Last commit date: $LAST_COMMIT_DATE"
         #echo "::set-output name=last_commit_date::$LAST_COMMIT_DATE"
 
