@@ -7,8 +7,6 @@ on:
     - cron: '0 5 * * *'
 
 env:
-  REPO: openwrt/openwrt
-  VERZEICHNIS: target/linux/ath79
   REPO_URL: https://github.com/openwrt/openwrt.git
   REPO_BRANCH: master
   OpenWRTDevice: Netgear-ex7300
@@ -23,6 +21,27 @@ jobs:
     steps:
     - name: Checkout Repository
       uses: actions/checkout@main
+
+    - name: Check last commit date
+      id: check_commit_date
+      run: |
+        LAST_COMMIT_DATE=$(git ls-remote --heads $REPO_URL $REPO_BRANCH | cut -f 1)
+        echo "Last commit date: $LAST_COMMIT_DATE"
+        #echo "::set-output name=last_commit_date::$LAST_COMMIT_DATE"
+
+    - name: Set up OpenWrt Environment
+      run: |
+        # Check if the last commit date is within the last 24 hours
+        LAST_COMMIT_TIMESTAMP=$(date -d "${{ steps.check_commit_date.outputs.last_commit_date }}" +"%s")
+        CURRENT_TIMESTAMP=$(date +"%s")
+        ELAPSED_TIME=$(($CURRENT_TIMESTAMP - $LAST_COMMIT_TIMESTAMP))
+        if [ $ELAPSED_TIME -gt 86400 ]; then
+          echo "No update in the last 24 hours. Skipping the workflow."
+          exit 0
+        fi
+
+        git clone --depth 1 --branch $REPO_BRANCH $REPO_URL
+
 
     - name: Install Dependencies
       run: |
@@ -45,34 +64,8 @@ jobs:
           unzip \
           zlib1g-dev \
           file \
-          jq \
           wget
-
-    - name: Check last commit date
-      id: check_commit_date
-      run: |
-        #LAST_COMMIT_DATE=$(curl -s https://api.github.com/repos/$REPO/commits/$REPO_BRANCH | jq -r '.[0].commit.author.date')
-        LAST_COMMIT_DATE=$(curl -s "https://api.github.com/repos/$REPO/commits?path=$VERZEICHNIS" | jq '.[0].commit.author.date')
-        echo "Last commit date: $LAST_COMMIT_DATE"
-        # Konvertiere das GitHub-Datum in Unix-Timestamp mit Python
-        LAST_COMMIT_DATE=$(python3 -c "from datetime import datetime; print(int(datetime.strptime('$LAST_COMMIT_DATE', '%Y-%m-%dT%H:%M:%SZ').timestamp()))")
-        echo "Last commit timestamp: $LAST_COMMIT_DATE"
-        #echo "::set-output name=last_commit_date::$LAST_COMMIT_DATE"
-
-    - name: Set up OpenWrt Environment
-      run: |
-        # Check if the last commit date is within the last 24 hours
-        LAST_COMMIT_TIMESTAMP=$(date -d "${{ steps.check_commit_date.outputs.last_commit_date }}" +"%s")
-        CURRENT_TIMESTAMP=$(date +"%s")
-        echo "Current Timestamp: $CURRENT_TIMESTAMP"
-        ELAPSED_TIME=$(($CURRENT_TIMESTAMP - $LAST_COMMIT_TIMESTAMP))
-        if [ $ELAPSED_TIME -gt 86400 ]; then
-          echo "No update in the last 24 hours. Skipping the workflow."
-          exit 0
-        fi
-        git clone --depth 1 --branch $REPO_BRANCH $REPO_URL
-
-        
+          
     - name: Display contents of .config start
       run:  |
         cat $GITHUB_WORKSPACE/$CONFIG_FILE
