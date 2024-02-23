@@ -1,31 +1,38 @@
-REPO="openwrt/openwrt"
-BRANCH="master"
-DIRECTORY="target/linux/ath79"
-THRESHOLD_SECONDS=$((24 * 60 * 60))  # 24 Stunden in Sekunden
+name: Check Directory Commit Date
 
-# Hole den letzten Commit für das Verzeichnis aus der GitHub API
-LAST_COMMIT=$(curl -s "https://api.github.com/repos/$REPO/commits/$BRANCH" | jq --arg DIRECTORY "$DIRECTORY" -r '.[] | select(.files[].filename | startswith($DIRECTORY)) | .commit.author.date')
+on:
+  push:
+    branches:
+      - main
 
-# Überprüfe, ob das Verzeichnis im letzten Commit geändert wurde
-if [ -n "$LAST_COMMIT" ]; then
-    # Konvertiere das GitHub-Datum in einen Unix-Timestamp
-    LAST_COMMIT_TIMESTAMP=$(date -d "$LAST_COMMIT" +"%s")
+jobs:
+  check_directory_commit:
+    runs-on: ubuntu-latest
 
-    # Aktuelles Datum in Unix-Timestamp
-    CURRENT_TIMESTAMP=$(date +"%s")
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
 
-    # Berechne die Differenz zwischen dem aktuellen Zeitstempel und dem Zeitstempel des letzten Commits
-    DIFF_SECONDS=$((CURRENT_TIMESTAMP - LAST_COMMIT_TIMESTAMP))
+    - name: Set up environment
+      run: |
+        DIRECTORY="target/linux/ath79"
+        THRESHOLD_SECONDS=$((24 * 60 * 60))  # 24 Stunden in Sekunden
 
-    # Überprüfe, ob die Differenz größer als die Schwellenzeit ist
-    if [ $DIFF_SECONDS -le $THRESHOLD_SECONDS ]; then
-        echo "Das Verzeichnis $DIRECTORY wurde im letzten Commit innerhalb der letzten 24 Stunden geändert. Fortsetzen..."
-        # Hier kannst du den Code für den Fall einfügen, dass das Verzeichnis im letzten Commit innerhalb der letzten 24 Stunden geändert wurde.
-    else
-        echo "Das Verzeichnis $DIRECTORY wurde im letzten Commit mehr als 24 Stunden zurück geändert. Abbrechen..."
-        exit 1
-    fi
-else
-    echo "Das Verzeichnis $DIRECTORY wurde im letzten Commit nicht gefunden. Abbrechen..."
-    exit 1
-fi
+        LAST_COMMIT=$(curl -s "https://api.github.com/repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA" | jq --arg DIRECTORY "$DIRECTORY" -r '.[] | select(.files[].filename | startswith($DIRECTORY)) | .commit.author.date')
+
+        if [ -n "$LAST_COMMIT" ]; then
+          LAST_COMMIT_TIMESTAMP=$(date -d "$LAST_COMMIT" +"%s")
+          CURRENT_TIMESTAMP=$(date +"%s")
+          DIFF_SECONDS=$((CURRENT_TIMESTAMP - LAST_COMMIT_TIMESTAMP))
+
+          if [ $DIFF_SECONDS -le $THRESHOLD_SECONDS ]; then
+            echo "Das Verzeichnis $DIRECTORY wurde im letzten Commit innerhalb der letzten 24 Stunden geändert. Fortsetzen..."
+            # Füge hier den Code für den Fall ein, dass das Verzeichnis im letzten Commit innerhalb der letzten 24 Stunden geändert wurde.
+          else
+            echo "Das Verzeichnis $DIRECTORY wurde im letzten Commit mehr als 24 Stunden zurück geändert. Abbrechen..."
+            exit 1
+          fi
+        else
+          echo "Das Verzeichnis $DIRECTORY wurde im letzten Commit nicht gefunden. Abbrechen..."
+          exit 1
+        fi
