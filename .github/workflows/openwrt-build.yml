@@ -1,5 +1,8 @@
 name: OpenWrt Release STABLE openwrt-24.10
 
+permissions:
+  contents: write
+  
 on:
   repository_dispatch:
   workflow_dispatch:
