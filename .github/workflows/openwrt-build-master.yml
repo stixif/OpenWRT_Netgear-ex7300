@@ -59,7 +59,8 @@ jobs:
           git \
           libncurses-dev \
           libssl-dev \
-          python3-distutils \
+          python3-venv \
+          # python3-distutils \
           rsync \
           unzip \
           zlib1g-dev \
