@@ -28,17 +28,19 @@ jobs:
         LAST_COMMIT_DATE=$(git ls-remote --heads $REPO_URL $REPO_BRANCH | cut -f 1)
         echo "Last commit date: $LAST_COMMIT_DATE"
         #echo "::set-output name=last_commit_date::$LAST_COMMIT_DATE"
-        - name: Check last commit date
 
     - name: Set up OpenWrt Environment
       run: |
+        # Check if the last commit date is within the last 24 hours
+        LAST_COMMIT_TIMESTAMP=$(date -d "${{ steps.check_commit_date.outputs.last_commit_date }}" +"%s")
         CURRENT_TIMESTAMP=$(date +"%s")
         ELAPSED_TIME=$(($CURRENT_TIMESTAMP - $LAST_COMMIT_TIMESTAMP))
         if [ $ELAPSED_TIME -gt 604800 ]; then
           echo "No update in the last 7 days. Skipping the workflow."
           exit 0
         fi
-        git clone --depth 1 --branch $REPO_BRANCH $REPO_URL openwrt
+
+        git clone --depth 1 --branch $REPO_BRANCH $REPO_URL
 
     - name: Install Dependencies
       run: |
