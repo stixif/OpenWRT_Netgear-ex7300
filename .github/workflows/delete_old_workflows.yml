@@ -17,8 +17,8 @@ jobs:
       - name: Delete Old Releases
         uses: dev-drprasad/delete-older-releases@v0.3.4 # Prüfe, ob es eine neuere Version gibt
         with:
-          keep_latest: 8
-          delete_expired_data: 30
+          keep_latest: 6
+          delete_expired_data: 15
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
